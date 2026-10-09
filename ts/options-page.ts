@@ -1,4 +1,4 @@
-import type { IOptions, WindowID, WindowProperty } from "./api.js";
+import type { GridMode, IOptions, WindowID, WindowProperty } from "./api.js";
 import { getCloneBounds } from "./getCloneBounds.js";
 import { getStorageWindowPropKey } from "./getStorageWindowPropKey.js";
 import { getOptions, isCloneMode, isMenuButtonType, isWindowID } from "./options.js";
@@ -25,6 +25,12 @@ const getFocusedName = (): WindowID => {
   return focused === undefined || focused.id === "focus-original" ? "original" : "new";
 };
 
+// grid mode for the resizing canvas: quarters (default) or thirds
+const getGridMode = (): GridMode => {
+  const gridEl = getFromClass<HTMLInputElement>("grid-option").find((option) => option.checked);
+  return gridEl !== undefined && gridEl.id === "grid-thirds" ? "thirds" : "quarters";
+};
+
 void getOptions().then((options) => {
   // save current state
   const save = () => {
@@ -32,6 +38,7 @@ void getOptions().then((options) => {
       focus: getFocusedName(),
       resizeOriginal: getFromId<HTMLInputElement>("resize-original").checked,
       copyFullscreen: getFromId<HTMLInputElement>("copy-fullscreen").checked,
+      gridMode: getGridMode(),
     };
 
     const cloneModeEl = getFromClass<HTMLInputElement>("clone-mode-option").find(
@@ -224,6 +231,25 @@ void getOptions().then((options) => {
       monitor.style.height = `${height}px`;
     }
 
+    // snap grid + visual grid helpers (quarters vs thirds)
+    // -------------------------------------------------------------------------
+    const getSnapGrid = (): [number, number] => {
+      const screenEl = getFromId("screen");
+      return getGridMode() === "thirds"
+        ? [screenEl.clientWidth / 3, screenEl.clientHeight / 3]
+        : [screenEl.clientWidth / gridsize, screenEl.clientHeight / gridsize];
+    };
+
+    const updateGrid = () => {
+      getFromId("screen").classList.toggle("thirds", getGridMode() === "thirds");
+      const grid = getSnapGrid();
+      getFromClass("window").forEach((win) => {
+        const $win = $(win);
+        $win.draggable("option", "grid", grid);
+        $win.resizable("option", "grid", grid);
+      });
+    };
+
     {
       // restore options
       // -----------------------------------------------------------------------
@@ -241,6 +267,12 @@ void getOptions().then((options) => {
       getFromClass<HTMLInputElement>("menu-button-option").forEach((opt) => {
         opt.checked = opt.id.includes(options.get("menuButtonType"));
       });
+      const curGridOption = getFromClass<HTMLInputElement>("grid-option").find(
+        (g) => g.id === `grid-${options.get("gridMode")}`,
+      );
+      if (curGridOption !== undefined) {
+        curGridOption.checked = true;
+      }
     }
 
     {
@@ -253,9 +285,7 @@ void getOptions().then((options) => {
           win.style[prop] = `${value * 100}%`;
         });
 
-        const grid = (["clientWidth", "clientHeight"] as const).map(
-          (d) => getFromId("screen")[d] / gridsize,
-        );
+        const grid = getSnapGrid();
 
         let saveTimeout: number;
         const update = () => {
@@ -300,6 +330,7 @@ void getOptions().then((options) => {
       updateResizeOriginal();
       updateResizeNew();
       updateFocus();
+      updateGrid();
       updateMaxDimensions();
       if (options.isCloneEnabled) {
         updateClone();
@@ -311,6 +342,9 @@ void getOptions().then((options) => {
       // -----------------------------------------------------------------------
       getFromId("resize-original").onchange = updateResizeOriginal;
       getFromClass("focus-option").forEach((el) => (el.onchange = updateFocus));
+      getFromClass("grid-option").forEach((el) => {
+        el.addEventListener("change", updateGrid, false);
+      });
       getFromTag("input").forEach((el) => (el.onclick = save));
       getFromId("commandsUrl").onclick = (event) => {
         void chrome.tabs.create({ url: (event.target as HTMLAnchorElement).href });
