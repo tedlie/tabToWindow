@@ -17,6 +17,9 @@ export const cloneModes = [
 ] as const;
 export type CloneMode = (typeof cloneModes)[number];
 
+export const gridModes = ["quarters", "thirds"] as const;
+export type GridMode = (typeof gridModes)[number];
+
 export const storedWindowBounds = [
   "originalWidth",
   "originalHeight",
@@ -38,6 +41,7 @@ export interface IBounds {
 
 export interface IOptions {
   cloneMode: CloneMode;
+  gridMode: GridMode;
   copyFullscreen: boolean;
   focus: WindowID;
   menuButtonType: WindowType;
