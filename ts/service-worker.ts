@@ -36,23 +36,6 @@ import { createMenu } from "./createMenu.js";
 import { createOptionsUpdateFromChanges, getOptions } from "./options.js";
 import { updateActionButton } from "./updateActionButton.js";
 
-// Installation
-// -----------------------------------------------------------------------------
-
-chrome.runtime.onInstalled.addListener((details) => {
-  const previousMajorVersion = parseInt(details.previousVersion ?? "0", 10);
-  const currentMajorVersion = parseInt(chrome.runtime.getManifest().version, 10);
-  const showUpdate =
-    details.reason === chrome.runtime.OnInstalledReason.INSTALL ||
-    (details.reason === chrome.runtime.OnInstalledReason.UPDATE &&
-      previousMajorVersion < currentMajorVersion);
-
-  if (showUpdate) {
-    const url = "https://acarabott.github.io/tabToWindow";
-    void chrome.tabs.create({ url, active: true });
-  }
-});
-
 // Storage
 // -----------------------------------------------------------------------------
 
