@@ -1,10 +1,11 @@
-import type { CloneMode, IOptions, WindowID, WindowType } from "./api.js";
-import { cloneModes, storedWindowBounds, windowIds, windowTypes } from "./api.js";
+import type { CloneMode, GridMode, IOptions, WindowID, WindowType } from "./api.js";
+import { cloneModes, gridModes, storedWindowBounds, windowIds, windowTypes } from "./api.js";
 
 export const kDefaultOptions: Readonly<IOptions> = {
   focus: "new",
   resizeOriginal: true,
   cloneMode: "clone-mode-no",
+  gridMode: "quarters",
   copyFullscreen: true,
   menuButtonType: "normal",
   originalWidth: 0.5,
@@ -19,6 +20,9 @@ export const kDefaultOptions: Readonly<IOptions> = {
 
 export const isCloneMode = (value: unknown): value is CloneMode =>
   typeof value === "string" && cloneModes.includes(value as CloneMode);
+
+export const isGridMode = (value: unknown): value is GridMode =>
+  typeof value === "string" && gridModes.includes(value as GridMode);
 
 export const isCopyFullscreen = (value: unknown): value is boolean => typeof value === "boolean";
 
@@ -46,6 +50,7 @@ export const isIOptions = (obj: unknown): obj is IOptions =>
   obj !== null &&
   typeof obj === "object" &&
   isCloneMode((obj as IOptions).cloneMode) &&
+  isGridMode((obj as IOptions).gridMode) &&
   isCopyFullscreen((obj as IOptions).copyFullscreen) &&
   isWindowID((obj as IOptions).focus) &&
   isMenuButtonType((obj as IOptions).menuButtonType) &&
@@ -78,6 +83,12 @@ export const createOptionsUpdateFromChanges = (changes: {
       case "copyFullscreen": {
         if (isCopyFullscreen(change.newValue)) {
           update.copyFullscreen = change.newValue;
+        }
+        break;
+      }
+      case "gridMode": {
+        if (isGridMode(change.newValue)) {
+          update.gridMode = change.newValue;
         }
         break;
       }
