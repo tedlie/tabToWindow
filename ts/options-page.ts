@@ -250,6 +250,20 @@ void getOptions().then((options) => {
       });
     };
 
+    // jQuery UI snaps to the grid *after* applying containment, so a fractional
+    // grid (thirds of the screen) can push a window past the screen edge.
+    // Clamp the snapped geometry back inside on every drag/resize.
+    const clampWindowToScreen = (
+      position: { left: number; top: number },
+      size: { width: number; height: number },
+    ) => {
+      const screenEl = getFromId("screen");
+      position.left = Math.max(0, Math.min(position.left, screenEl.clientWidth - size.width));
+      position.top = Math.max(0, Math.min(position.top, screenEl.clientHeight - size.height));
+      size.width = Math.max(1, Math.min(size.width, screenEl.clientWidth - position.left));
+      size.height = Math.max(1, Math.min(size.height, screenEl.clientHeight - position.top));
+    };
+
     {
       // restore options
       // -----------------------------------------------------------------------
@@ -303,7 +317,13 @@ void getOptions().then((options) => {
         $win.draggable({
           containment: "parent",
           grid,
-          drag: update,
+          drag: (_event: JQueryEventObject, ui: JQueryUI.DraggableEventUIParams) => {
+            clampWindowToScreen(ui.position, {
+              width: win.offsetWidth,
+              height: win.offsetHeight,
+            });
+            update();
+          },
           start: update,
           stop: update,
         });
@@ -318,7 +338,12 @@ void getOptions().then((options) => {
           grid,
           minWidth: winParentWidth * kMinClonePercentage,
           minHeight: winParentHeight * kMinClonePercentage,
-          resize: update,
+          resize: (_event: JQueryEventObject, ui: JQueryUI.ResizableUIParams) => {
+            const position = ui.position as { left: number; top: number };
+            const size = ui.size as { width: number; height: number };
+            clampWindowToScreen(position, size);
+            update();
+          },
           start: update,
           stop: update,
         });
