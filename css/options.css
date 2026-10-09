@@ -175,6 +175,23 @@ ul {
   user-select: none;
 }
 
+#screen.thirds {
+  background-image: repeating-linear-gradient(
+      0deg,
+      rgb(180, 180, 180),
+      rgb(180, 180, 180) 2px,
+      transparent 2px,
+      transparent 33.333%
+    ),
+    repeating-linear-gradient(
+      -90deg,
+      rgb(180, 180, 180),
+      rgb(180, 180, 180) 2px,
+      transparent 2px,
+      transparent 33.333%
+    );
+}
+
 .window {
   position: absolute;
   width: 200px;
